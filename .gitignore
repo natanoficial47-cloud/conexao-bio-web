@@ -3,3 +3,7 @@ __pycache__/
 *.py[cod]
 .env
 .DS_Store
+redefinir_admin.py
+set_senha_banco.py
+DEPLOY.md
+checar_banco.py
