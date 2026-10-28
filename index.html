@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conexão BIO - Plataforma de Convivência Escolar</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Endereço da API: "auto" = mesma origem em produção (Vercel usa rewrite /api)
+         e API local em desenvolvimento. Para fixar um endereço, escreva aqui. -->
+    <meta name="api-base" content="auto">
+</head>
+<body>
+
+    <!-- ÍCONES SVG EMBUTIDOS (sem CDN, sem Font Awesome) -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <symbol id="i-dna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 2.5c0 5.5 10 5.5 10 11S7 19 7 21.5"/>
+            <path d="M17 2.5c0 5.5-10 5.5-10 11s10 5.5 10 8"/>
+            <path d="M8.7 6h6.6M6.6 10h10.8M6.6 14h10.8M8.7 18h6.6"/>
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/>
+            <path d="M8 10.5V7.2a4 4 0 0 1 8 0v3.3"/>
+            <path d="M12 14.6v2.6"/>
+        </symbol>
+        <symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3.4 2.6 20.2h18.8L12 3.4Z"/>
+            <path d="M12 9.6v4.8"/>
+            <path d="M12 17.4h.01"/>
+        </symbol>
+        <symbol id="i-half" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="m8 12.2 2.8 2.8L16.4 9.4"/>
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 11.2v5.4"/>
+            <path d="M12 7.8h.01"/>
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 6.5h15"/>
+            <path d="M9.5 6.5V4.9a1.4 1.4 0 0 1 1.4-1.4h2.2a1.4 1.4 0 0 1 1.4 1.4v1.6"/>
+            <path d="M6.6 6.5 7.5 19a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l.9-12.5"/>
+            <path d="M10.3 10.2v6.4M13.7 10.2v6.4"/>
+        </symbol>
+    </svg>
+
+    <!-- CABEÇALHO -->
+    <header class="main-header">
+        <div class="logo-area">
+            <div class="logo-icon"><svg class="icon" aria-hidden="true"><use href="#i-dna"></use></svg></div>
+            <div>
+                <h1>Conexão BIO</h1>
+                <p>Ensino Médio Técnico em Biotecnologia</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- LOGIN ÚNICO (alunos e equipe entram pelo mesmo formulário) -->
+    <main id="auth-container" class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-icon"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg></div>
+            <h2 id="auth-title">Entrar na plataforma</h2>
+            <p id="auth-subtitle">Use seu e-mail ou matrícula e sua senha para acessar.</p>
+
+            <p id="server-status" class="server-status" role="status" aria-live="polite"></p>
+
+            <div class="auth-form-section">
+
+                <!-- Entrar -->
+                <div id="login-form">
+                    <div class="input-group">
+                        <label for="auth-email">E-mail ou Matrícula</label>
+                        <input type="text" id="auth-email" placeholder="Ex: maria.clara@escola.com" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="auth-password">Senha</label>
+                        <input type="password" id="auth-password" placeholder="Sua senha" autocomplete="current-password">
+                    </div>
+                    <button onclick="loginUser(this)" class="btn-primary">Entrar na Plataforma BIO</button>
+                    <p class="auth-switch">Estudante e ainda não tem conta?
+                        <button type="button" class="link-btn" onclick="showAuthForm('register')">Criar minha conta</button>
+                    </p>
+                </div>
+
+                <!-- Criar conta (somente estudantes) -->
+                <div id="register-form" style="display: none;">
+                    <div class="input-group">
+                        <label for="reg-student-name">Nome Completo</label>
+                        <input type="text" id="reg-student-name" placeholder="Ex: Maria Clara Silva" autocomplete="name">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-student-email">E-mail ou Matrícula</label>
+                        <input type="text" id="reg-student-email" placeholder="Ex: maria.clara@escola.com" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-student-password">Crie uma senha (mínimo 10 caracteres)</label>
+                        <input type="password" id="reg-student-password" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-student-password2">Repita a senha</label>
+                        <input type="password" id="reg-student-password2" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-class-code">Código da turma</label>
+                        <input type="text" id="reg-class-code" placeholder="Informado pela escola" autocomplete="off">
+                    </div>
+                    <button onclick="registerStudent(this)" class="btn-primary">Criar conta</button>
+                    <p class="auth-switch">Já tem conta?
+                        <button type="button" class="link-btn" onclick="showAuthForm('login')">Entrar</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- TROCA DE SENHA (exigida no primeiro acesso quando o PIN ainda é provisório) -->
+    <main id="password-container" class="auth-wrapper" style="display: none;">
+        <div class="auth-card">
+            <div class="auth-icon"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg></div>
+            <h2 id="password-title">Crie a sua senha</h2>
+            <p id="password-subtitle">O PIN provisório precisa ser trocado por uma senha só sua antes de continuar.</p>
+
+            <div class="auth-form-section">
+                <div class="input-group">
+                    <label for="pwd-current">Senha atual ou PIN provisório</label>
+                    <input type="password" id="pwd-current" autocomplete="current-password">
+                </div>
+                <div class="input-group">
+                    <label for="pwd-new">Nova senha</label>
+                    <input type="password" id="pwd-new" autocomplete="new-password" oninput="checkPasswordStrength()">
+                    <div class="pwd-meter" role="presentation"><div id="pwd-meter-bar" class="pwd-meter-bar"></div></div>
+                    <small id="pwd-hint" class="pwd-hint">Mínimo de 10 caracteres, misturando letras e números.</small>
+                </div>
+                <div class="input-group">
+                    <label for="pwd-new2">Repita a nova senha</label>
+                    <input type="password" id="pwd-new2" autocomplete="new-password">
+                </div>
+                <button onclick="changePassword(this)" class="btn-primary">Salvar nova senha</button>
+                <p id="pwd-status" class="auth-switch" role="status"></p>
+                <p class="auth-switch" id="pwd-logout-row">
+                    <button type="button" class="link-btn" onclick="logoutSession(this)">Sair da plataforma</button>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- PAINEL DO ESTUDANTE -->
+    <div id="view-student" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2 id="student-welcome-title">Olá, Estudante!</h2>
+                    <p>Bem-vindo ao seu painel seguro. <span id="current-student-label"></span></p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair da Conta</button>
+                </div>
+            </div>
+
+            <nav class="tabs">
+                <button id="stab-btn-home" class="active" onclick="switchStudentTab('home')">Início</button>
+                <button id="stab-btn-missions" onclick="switchStudentTab('missions')">Missões</button>
+                <button id="stab-btn-dna" onclick="switchStudentTab('dna')">Meu DNA</button>
+                <button id="stab-btn-diary" onclick="switchStudentTab('diary')">Diário BIO</button>
+                <button id="stab-btn-help" onclick="switchStudentTab('help')">Preciso de ajuda</button>
+            </nav>
+
+            <!-- Início -->
+            <section id="stab-home" class="tab-content">
+                <h3>Seu espaço</h3>
+                <p>Aqui você encontra missões para treinar convivência, um diário só seu e canais de apoio.
+                   O que você escreve no diário é <strong>privado</strong>: só você consegue ler.</p>
+            </section>
+
+            <!-- Missões -->
+            <section id="stab-missions" class="tab-content" style="display: none;">
+                <!-- Lista -->
+                <div id="missions-list-view">
+                    <h3>Missões</h3>
+                    <p>Situações do dia a dia da escola. Escolha como você agiria e veja o que acontece.</p>
+                    <p id="missions-progress" class="missions-progress"></p>
+                    <div id="missions-list" class="missions-grid"></div>
+                </div>
+
+                <!-- Uma missão -->
+                <div id="mission-detail-view" style="display: none;">
+                    <button type="button" class="link-btn" onclick="closeMission()">← Voltar às missões</button>
+                    <div class="mission-head">
+                        <span id="mission-dim" class="tag"></span>
+                        <h3 id="mission-title"></h3>
+                    </div>
+                    <p id="mission-scenario" class="mission-scenario"></p>
+                    <div id="mission-options" class="options"></div>
+
+                    <div id="mission-feedback" class="feedback-box" style="display: none;">
+                        <h4 id="feedback-title"></h4>
+                        <p id="feedback-text"></p>
+                        <p id="feedback-points" class="feedback-points"></p>
+                        <div class="feedback-actions">
+                            <button type="button" class="btn-table neutral" onclick="retryMission()">Tentar outra opção</button>
+                            <button type="button" class="btn-table" onclick="nextMission()">Próxima missão</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Meu DNA da Personalidade -->
+            <section id="stab-dna" class="tab-content" style="display: none;">
+                <!-- Apresentação -->
+                <div id="dna-intro-view">
+                    <h3>Meu DNA da Personalidade</h3>
+                    <p>Um teste rápido para você se conhecer melhor. São 30 afirmações: para cada uma, escolha o quanto ela combina com você.</p>
+                    <ul class="help-list">
+                        <li>Não existem respostas certas ou erradas.</li>
+                        <li>Leva cerca de 5 minutos. Responda pensando em como você costuma ser.</li>
+                        <li>O resultado é só seu: aparece apenas para você, na sua conta.</li>
+                        <li>Não é um diagnóstico: é um retrato de como você se vê hoje, e isso muda com o tempo.</li>
+                    </ul>
+                    <button type="button" class="btn-primary btn-inline" onclick="startDna()">Começar o teste</button>
+                </div>
+
+                <!-- Perguntas -->
+                <div id="dna-quiz-view" style="display: none;">
+                    <div class="dna-progress">
+                        <span id="dna-progress-label"></span>
+                        <div class="bar"><span id="dna-progress-bar"></span></div>
+                    </div>
+                    <h3 id="dna-question" class="dna-question"></h3>
+                    <div id="dna-scale" class="dna-scale"></div>
+                    <div class="dna-nav">
+                        <button type="button" id="dna-back" class="btn-table neutral" onclick="dnaBack()">← Anterior</button>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div id="dna-result-view" style="display: none;">
+                    <h3>Meu DNA da Personalidade</h3>
+                    <p id="dna-date" class="missions-progress"></p>
+                    <div id="dna-result-list"></div>
+                    <p class="help-note-small">Este resultado não é um diagnóstico nem uma nota. Ele mostra como você se enxerga hoje e pode mudar com o tempo.
+                        Se quiser conversar sobre ele, procure a psicologia da escola.</p>
+                    <button type="button" class="btn-table neutral" onclick="restartDna()">Refazer o teste</button>
+                </div>
+            </section>
+
+            <!-- Diário -->
+            <section id="stab-diary" class="tab-content" style="display: none;">
+                <h3>Diário BIO</h3>
+                <p>Como você está hoje?</p>
+                <div id="mood-selector" class="mood-selector">
+                    <button class="mood-btn" data-mood="Feliz" onclick="selectMood('Feliz')">😊 Feliz</button>
+                    <button class="mood-btn" data-mood="Calmo" onclick="selectMood('Calmo')">😌 Calmo</button>
+                    <button class="mood-btn" data-mood="Cansado" onclick="selectMood('Cansado')">😴 Cansado</button>
+                    <button class="mood-btn" data-mood="Ansioso" onclick="selectMood('Ansioso')">😟 Ansioso</button>
+                    <button class="mood-btn" data-mood="Triste" onclick="selectMood('Triste')">😢 Triste</button>
+                    <button class="mood-btn" data-mood="Irritado" onclick="selectMood('Irritado')">😠 Irritado</button>
+                </div>
+                <textarea id="diary-text" class="diary-text" rows="5" maxlength="5000" placeholder="Escreva o que quiser. Só você vê isso."></textarea>
+                <div class="diary-actions">
+                    <button onclick="saveDiaryEntry(this)" class="btn-primary btn-inline">Salvar reflexão</button>
+                    <span id="diary-status" class="diary-status"></span>
+                </div>
+                <h4 class="diary-history-title">Suas reflexões anteriores</h4>
+                <div id="diary-history"></div>
+            </section>
+
+            <!-- Ajuda -->
+            <section id="stab-help" class="tab-content" style="display: none;">
+                <h3>Preciso de ajuda</h3>
+                <p>Se você está passando por algo difícil, você não precisa lidar com isso sozinho(a).</p>
+                <ul class="help-list">
+                    <li>Converse com um professor ou com a psicologia da escola.</li>
+                    <li>Fale com alguém de confiança da sua família.</li>
+                    <li>Ligue para o <strong>CVV, 188</strong> (gratuito, 24 horas, também por chat em cvv.org.br).</li>
+                </ul>
+                <p class="help-note">Em caso de risco imediato, ligue 192 (SAMU) ou procure um adulto agora.</p>
+            </section>
+        </div>
+    </div>
+
+    <!-- MENU DA EQUIPE (administrador e psicologia: uma tela de cada vez) -->
+    <div id="staff-nav" class="staff-nav" style="display: none;">
+        <nav class="tabs">
+            <button id="snav-btn-class" class="active" onclick="switchStaffTab('class')">Turma</button>
+            <button id="snav-btn-metrics" onclick="switchStaffTab('metrics')">Indicadores</button>
+            <button id="snav-btn-missions" onclick="switchStaffTab('missions')">Missões</button>
+            <button id="snav-btn-team" onclick="switchStaffTab('team')">Equipe</button>
+            <button id="snav-btn-logs" onclick="switchStaffTab('logs')">Acessos</button>
+        </nav>
+    </div>
+
+    <!-- PAINEL DO PROFESSOR -->
+    <div id="view-teacher" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2>Painel do Professor • 1º Ano Biotecnologia</h2>
+                    <p>Avaliação e Rubricas de Observação.</p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair</button>
+                </div>
+            </div>
+
+            <div class="add-student">
+                <h3>Cadastrar aluno</h3>
+                <div class="add-student-row">
+                    <input type="text" id="new-student-name" placeholder="Nome completo">
+                    <input type="text" id="new-student-email" placeholder="E-mail ou matrícula">
+                    <button onclick="createStudent(this)" class="btn-table">Cadastrar</button>
+                </div>
+                <p id="new-student-result" class="pin-result"></p>
+            </div>
+
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Estudante</th>
+                            <th>Comunicação</th>
+                            <th>Conflitos</th>
+                            <th>Cooperação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-students-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL DA PSICOLOGIA / COORDENAÇÃO (indicadores) -->
+    <div id="view-admin" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2>Painel da Psicologia & Coordenação</h2>
+                    <p>Indicadores Coletivos da Turma</p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair</button>
+                </div>
+            </div>
+
+            <div id="admin-metrics-container">
+                <p>Total de estudantes avaliados: <span id="admin-evaluated-count">0</span></p>
+                <p>Pontuação Coletiva: <span id="admin-total-score">0 / 1000</span></p>
+                <p><span id="admin-meta-percent">0% da Meta Atingida</span></p>
+                <p><span id="admin-pedagogical-range">Evolução Parcial</span>
+                   <small id="admin-range-desc" class="range-desc">Intensificar intervenções pedagógicas</small></p>
+
+                <div class="dim">
+                    <div class="dim-head"><span>Comunicação</span><span id="dim-score-1">0 pts</span></div>
+                    <div class="bar"><span id="dim-bar-1"></span></div>
+                </div>
+                <div class="dim">
+                    <div class="dim-head"><span>Gestão de conflitos</span><span id="dim-score-2">0 pts</span></div>
+                    <div class="bar"><span id="dim-bar-2"></span></div>
+                </div>
+                <div class="dim">
+                    <div class="dim-head"><span>Cooperação</span><span id="dim-score-3">0 pts</span></div>
+                    <div class="bar"><span id="dim-bar-3"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GESTÃO DAS MISSÕES (psicologia e administração) -->
+    <div id="view-missions-admin" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2>Missões dos estudantes</h2>
+                    <p>Crie e edite as situações que os alunos encontram na aba Missões.</p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair</button>
+                </div>
+            </div>
+
+            <!-- Lista -->
+            <div id="mission-manage-list-view">
+                <button type="button" class="btn-table" onclick="newMission()">+ Nova missão</button>
+                <div id="manage-missions-list" class="manage-list"></div>
+            </div>
+
+            <!-- Formulário -->
+            <div id="mission-form-view" style="display: none;">
+                <h3 id="mission-form-title">Nova missão</h3>
+                <div class="mf-group">
+                    <label for="mf-title">Título</label>
+                    <input type="text" id="mf-title" class="mf-input" maxlength="120" placeholder="Ex.: O boato no grupo da turma">
+                </div>
+                <div class="mf-group">
+                    <label for="mf-dimension">Habilidade trabalhada</label>
+                    <select id="mf-dimension" class="select-control">
+                        <option value="comunicacao">Comunicação</option>
+                        <option value="conflitos">Gestão de conflitos</option>
+                        <option value="cooperacao">Cooperação</option>
+                    </select>
+                </div>
+                <div class="mf-group">
+                    <label for="mf-scenario">Situação</label>
+                    <textarea id="mf-scenario" class="mf-input" rows="3" maxlength="1500" placeholder="Descreva a situação em que o aluno precisa decidir o que fazer."></textarea>
+                </div>
+
+                <h4>Opções de resposta (2 a 4)</h4>
+                <p class="help-note-small">Marque o nível de cada opção: <strong>melhor escolha</strong> vale 10 pontos, <strong>intermediária</strong> 5 e <strong>a repensar</strong> 0.
+                    É preciso ter pelo menos uma opção como melhor escolha. O aluno só vê o nível e o feedback depois de responder.</p>
+                <div id="mission-form-options"></div>
+                <button type="button" id="mf-add-option" class="btn-table neutral" onclick="addMissionOption()">+ Adicionar opção</button>
+
+                <label class="mf-check"><input type="checkbox" id="mf-active" checked> Missão ativa (visível para os alunos)</label>
+
+                <div class="feedback-actions">
+                    <button type="button" class="btn-table" onclick="saveMission(this)">Salvar missão</button>
+                    <button type="button" class="btn-table neutral" onclick="cancelMissionForm()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GESTÃO DA EQUIPE (somente administrador) -->
+    <div id="view-staffadmin" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2>Equipe da escola</h2>
+                    <p>Crie contas para professores, psicologia e coordenação.</p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair</button>
+                </div>
+            </div>
+
+            <div class="add-student">
+                <h3>Nova conta da equipe</h3>
+                <div class="add-student-row">
+                    <input type="text" id="staff-name" placeholder="Nome completo">
+                    <input type="email" id="staff-email" placeholder="E-mail institucional" autocomplete="off">
+                    <input type="password" id="staff-password" placeholder="Senha (mínimo 10 caracteres)" autocomplete="new-password">
+                    <select id="staff-role" class="select-control">
+                        <option value="teacher">Professor(a)</option>
+                        <option value="psychologist">Psicólogo(a)</option>
+                        <option value="admin">Administrador(a)</option>
+                    </select>
+                    <button onclick="createStaff(this)" class="btn-table">Criar conta</button>
+                </div>
+                <p id="staff-result" class="pin-result"></p>
+                <p class="help-note-small">Cada pessoa só enxerga a área do seu perfil. Passe a senha em mão e peça para ela guardar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDITORIA DE ACESSOS (somente administrador) -->
+    <div id="view-logs" style="display: none;">
+        <div class="container">
+            <div class="panel-head">
+                <div>
+                    <h2>Histórico de acessos</h2>
+                    <p>Quem entrou, de onde veio e o que deu errado.</p>
+                </div>
+                <div class="panel-head-actions">
+                    <button onclick="openPasswordScreen(false)" class="btn-secondary">Minha senha</button>
+                    <button onclick="logoutSession(this)" class="btn-secondary">Sair</button>
+                </div>
+            </div>
+
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Quando</th>
+                            <th>Conta</th>
+                            <th>Origem</th>
+                            <th>Resultado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADER GLOBAL (aparece sozinho enquanto a API responde) -->
+    <div id="global-loader" class="global-loader" role="status" aria-live="polite" aria-hidden="true">
+        <div class="loader-box">
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="loader-label">Carregando…</span>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO, EXCLUSÃO E AVISO -->
+    <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="modal-title" aria-describedby="modal-message" aria-hidden="true">
+        <div class="modal-card" id="modal-card">
+            <div class="modal-icon" id="modal-icon" aria-hidden="true"></div>
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <div class="modal-actions">
+                <button type="button" id="modal-cancel" class="btn-table neutral">Cancelar</button>
+                <button type="button" id="modal-confirm" class="btn-table">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AVISOS RÁPIDOS (sucesso / erro) -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script src="ui.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
