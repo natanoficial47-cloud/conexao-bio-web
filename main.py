@@ -22,6 +22,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 import secrets
 
 import dna_data
@@ -1503,9 +1506,6 @@ def metrics(
         "dim_conflict": dim_conflict,
         "dim_coop": dim_coop,
     }
-
-    from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 # Serve os ficheiros de estilos e scripts diretamente da raiz
 app.mount("/static", StaticFiles(directory="."), name="static")
