@@ -6,6 +6,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urlsplit
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Header, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,9 +24,6 @@ from sqlalchemy import (
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
-
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 import secrets
 
