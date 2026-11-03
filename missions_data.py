@@ -1,5 +1,5 @@
 """
-Missões da Conexão BIO.
+Missões do Estresse em Foco.
 
 Para editar ou acrescentar missões, basta mexer neste arquivo (o site lê daqui).
 Cada missão tem:

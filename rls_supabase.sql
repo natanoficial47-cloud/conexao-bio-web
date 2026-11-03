@@ -1,4 +1,4 @@
--- Conexão BIO — liga o RLS em TODAS as tabelas do schema public (idempotente).
+-- Estresse em Foco — liga o RLS em TODAS as tabelas do schema public (idempotente).
 -- Rode no Supabase: SQL Editor -> New query -> colar -> Run.
 -- Rode DEPOIS da primeira subida da API (é ela quem cria as tabelas) e de novo
 -- sempre que uma tabela nova aparecer.

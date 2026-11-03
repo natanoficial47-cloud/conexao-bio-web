@@ -1,4 +1,4 @@
-// ===== Conexão BIO — front-end =====
+// ===== Estresse em Foco — front-end =====
 //
 // SEGURANÇA: o token de sessão NÃO fica no localStorage. Ele mora num cookie
 // HttpOnly que o navegador envia sozinho e que o JavaScript não consegue ler.
@@ -465,8 +465,8 @@ function selectMood(mood) {
     selectedMood = mood;
     document.querySelectorAll('#mood-selector .mood-btn').forEach(b => {
         const selected = !!mood && b.dataset.mood === mood;
-        b.style.borderColor = selected ? 'var(--bioteal-600)' : 'var(--biogray-200)';
-        b.style.backgroundColor = selected ? 'var(--bioteal-50)' : 'white';
+        b.style.borderColor = selected ? 'var(--lilac-600)' : 'var(--gray-200)';
+        b.style.backgroundColor = selected ? 'var(--lilac-50)' : 'white';
     });
 }
 
@@ -560,7 +560,7 @@ function renderTeacherTable(students) {
     if (!tbody) return;
 
     if (!students || students.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--biogray-600); padding:2rem;">Nenhum estudante cadastrado ainda.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--gray-600); padding:2rem;">Nenhum estudante cadastrado ainda.</td></tr>`;
         return;
     }
 
@@ -571,7 +571,7 @@ function renderTeacherTable(students) {
         return `<tr>
             <td>
                 <strong>${esc(s.name)}</strong>
-                <small style="display:block; color: var(--biogray-600);">${esc(s.email)}</small>
+                <small style="display:block; color: var(--gray-600);">${esc(s.email)}</small>
                 ${s.must_change_password ? '<span class="tag warn">PIN provisório</span>' : ''}
             </td>
             <td>${rubricSelect('comm', id, s.comm)}</td>
@@ -793,7 +793,7 @@ async function loadAccessLog() {
         }
         const logs = await response.json();
         if (!logs.length) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--biogray-600); padding:2rem;">Nenhum acesso registrado ainda.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--gray-600); padding:2rem;">Nenhum acesso registrado ainda.</td></tr>`;
             return;
         }
         const rotulos = {
@@ -830,7 +830,7 @@ const DIM_LABELS = {
 };
 
 const LEVEL_STYLE = {
-    good: { bg: 'var(--bioteal-50)', border: 'var(--bioteal-100)', color: 'var(--bioteal-800)', icon: 'check', label: 'Ótima escolha' },
+    good: { bg: 'var(--lilac-50)', border: 'var(--lilac-100)', color: 'var(--lilac-800)', icon: 'check', label: 'Ótima escolha' },
     ok:   { bg: '#fffbeb', border: '#fde68a', color: '#92400e', icon: 'half', label: 'Dá para melhorar' },
     poor: { bg: '#fef2f2', border: '#fecaca', color: '#991b1b', icon: 'warning', label: 'Vale repensar' }
 };

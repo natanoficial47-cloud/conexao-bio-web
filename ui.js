@@ -1,4 +1,4 @@
-// ===== Conexão BIO — camada de interface =====
+// ===== Estresse em Foco — camada de interface =====
 //
 // Duas coisas que o navegador não dá de graça:
 //   1. LOADER global de carregamento (spinner + bloqueio de tela enquanto a API responde)

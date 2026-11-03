@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "mkdir -p public && cp index.html script.js style.css ui.js public/",
+  "buildCommand": "mkdir -p public && cp index.html script.js style.css ui.js logo.png public/",
   "outputDirectory": "public",
   "rewrites": [
     {
@@ -38,6 +38,12 @@
     },
     {
       "source": "/ui.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/logo.png",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

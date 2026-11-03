@@ -1,17 +1,22 @@
-/* ===== Conexão BIO — estilos ===== */
+/* ===== Estresse em Foco — estilos ===== */
 :root {
-    --bioteal-50: #f0fdfa;
-    --bioteal-100: #ccfbf1;
-    --bioteal-500: #14b8a6;
-    --bioteal-600: #0d9488;
-    --bioteal-700: #0f766e;
-    --bioteal-800: #115e59;
+    --lilac-50: #FAF7FC;
+    --lilac-100: #F6EDFD;
+    --lilac-200: #EEDDFC;
+    --lilac-300: #D8ADEB;
+    --lilac-400: #C68FE0;
+    --lilac-500: #9F5BB5;
+    --lilac-600: #702A8C;
+    --lilac-700: #5E1F7A;
+    --lilac-800: #2D0A44;
+    --lilac-900: #230538;
+    --lilac-accent: #B83280;
     --slate-50: #f8fafc;
     --slate-200: #e2e8f0;
     --slate-500: #64748b;
     --slate-800: #1e293b;
-    --biogray-200: #e2e8f0;
-    --biogray-600: #64748b;
+    --gray-200: #e2e8f0;
+    --gray-600: #64748b;
     --slate-400: #94a3b8;
     --radius: 14px;
     --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
@@ -55,14 +60,21 @@ body {
 .logo-area { display: flex; align-items: center; gap: 14px; }
 
 .logo-icon {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
+    flex: none;
     border-radius: 12px;
     display: grid;
     place-items: center;
-    font-size: 1.4rem;
-    color: #fff;
-    background: linear-gradient(135deg, var(--bioteal-500), var(--bioteal-800));
+    overflow: hidden;
+    background: var(--lilac-50);
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
 }
 
 .logo-area h1 { font-size: 1.4rem; line-height: 1.1; }
@@ -93,7 +105,7 @@ body {
 
 .role-switcher button.active {
     background: #fff;
-    color: var(--bioteal-700);
+    color: var(--lilac-700);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
@@ -124,8 +136,8 @@ body {
     display: grid;
     place-items: center;
     font-size: 1.6rem;
-    color: var(--bioteal-700);
-    background: var(--bioteal-100);
+    color: var(--lilac-700);
+    background: var(--lilac-100);
 }
 
 .auth-card h2 { font-size: 1.4rem; margin-bottom: 6px; }
@@ -159,9 +171,9 @@ body {
 }
 
 .input-group input:focus {
-    border-color: var(--bioteal-500);
+    border-color: var(--lilac-500);
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+    box-shadow: 0 0 0 3px rgba(112, 42, 140, 0.18);
 }
 
 .auth-switch {
@@ -177,7 +189,7 @@ body {
     padding: 0;
     font: inherit;
     font-weight: 600;
-    color: var(--bioteal-700);
+    color: var(--lilac-700);
     cursor: pointer;
     text-decoration: underline;
 }
@@ -198,9 +210,9 @@ body {
     width: 100%;
     border: none;
     color: #fff;
-    background: var(--bioteal-600);
+    background: var(--lilac-600);
 }
-.btn-primary:hover { background: var(--bioteal-700); }
+.btn-primary:hover { background: var(--lilac-700); }
 .btn-primary.btn-inline { width: auto; }
 
 .btn-secondary {
@@ -218,7 +230,7 @@ body {
     font-size: 0.82rem;
     font-weight: 600;
     color: #fff;
-    background: var(--bioteal-600);
+    background: var(--lilac-600);
     cursor: pointer;
     white-space: nowrap;
 }
@@ -318,7 +330,7 @@ body {
     border-bottom: 3px solid transparent;
 }
 .tabs button:hover { color: var(--slate-800); }
-.tabs button.active { color: var(--bioteal-700); border-bottom-color: var(--bioteal-600); }
+.tabs button.active { color: var(--lilac-700); border-bottom-color: var(--lilac-600); }
 
 /* Missões */
 .options { display: grid; gap: 10px; margin: 16px 0; }
@@ -333,7 +345,7 @@ body {
     cursor: pointer;
     transition: border-color 0.18s ease, background-color 0.18s ease;
 }
-.option-btn:hover { border-color: var(--bioteal-500); background: var(--bioteal-50); }
+.option-btn:hover { border-color: var(--lilac-500); background: var(--lilac-50); }
 
 .feedback-box {
     padding: 16px;
@@ -347,14 +359,14 @@ body {
 .mood-selector { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
 .mood-btn {
     padding: 10px 14px;
-    border: 1.5px solid var(--biogray-200);
+    border: 1.5px solid var(--gray-200);
     border-radius: 999px;
     background: #fff;
     font-size: 0.92rem;
     cursor: pointer;
     transition: border-color 0.18s ease, background-color 0.18s ease;
 }
-.mood-btn:hover { border-color: var(--bioteal-500); }
+.mood-btn:hover { border-color: var(--lilac-500); }
 
 .diary-text {
     width: 100%;
@@ -367,13 +379,13 @@ body {
     outline: none;
 }
 .diary-text:focus {
-    border-color: var(--bioteal-500);
+    border-color: var(--lilac-500);
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+    box-shadow: 0 0 0 3px rgba(112, 42, 140, 0.18);
 }
 
 .diary-actions { display: flex; align-items: center; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
-.diary-status { color: var(--bioteal-700); font-weight: 600; font-size: 0.9rem; }
+.diary-status { color: var(--lilac-700); font-weight: 600; font-size: 0.9rem; }
 .diary-history-title { margin: 24px 0 8px; }
 
 .diary-entry {
@@ -406,7 +418,7 @@ body {
     border-radius: 8px;
     font-size: 0.92rem;
 }
-.pin-result { margin: 10px 0 0 !important; color: var(--bioteal-800) !important; font-weight: 600; word-break: break-word; }
+.pin-result { margin: 10px 0 0 !important; color: var(--lilac-800) !important; font-weight: 600; word-break: break-word; }
 
 .table-scroll { overflow-x: auto; }
 
@@ -446,7 +458,7 @@ body {
 .dim { margin-top: 16px; }
 .dim-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
 .bar { height: 10px; background: var(--slate-200); border-radius: 999px; overflow: hidden; }
-.bar > span { display: block; height: 100%; width: 0; background: var(--bioteal-500); transition: width 0.4s; }
+.bar > span { display: block; height: 100%; width: 0; background: var(--lilac-500); transition: width 0.4s; }
 
 @media (max-width: 600px) {
     .main-header { padding: 16px; justify-content: center; }
@@ -463,7 +475,7 @@ body {
 
 /* Foco visível para navegação por teclado */
 :focus-visible {
-    outline: 2px solid var(--bioteal-600);
+    outline: 2px solid var(--lilac-600);
     outline-offset: 2px;
 }
 
@@ -481,15 +493,15 @@ body {
 }
 
 /* ===== Missões, Meu DNA e gestão de missões ===== */
-.missions-progress { font-weight: 600; color: var(--bioteal-700) !important; }
+.missions-progress { font-weight: 600; color: var(--lilac-700) !important; }
 .missions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 8px; }
 .mission-card {
     display: flex; flex-direction: column; gap: 8px; align-items: flex-start; text-align: left;
     padding: 16px; border: 1.5px solid var(--slate-200); border-radius: 12px; background: #fff;
     font: inherit; color: var(--slate-800); cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.mission-card:hover { border-color: var(--bioteal-500); transform: translateY(-2px); box-shadow: var(--shadow); }
-.mission-card.done { background: var(--bioteal-50); border-color: var(--bioteal-100); }
+.mission-card:hover { border-color: var(--lilac-500); transform: translateY(-2px); box-shadow: var(--shadow); }
+.mission-card.done { background: var(--lilac-50); border-color: var(--lilac-100); }
 .mission-card small { color: var(--slate-500); }
 .mission-head { margin: 14px 0 6px; }
 .mission-head h3 { margin: 8px 0 0; }
@@ -507,13 +519,13 @@ body {
     border: 1.5px solid var(--slate-200); border-radius: 10px; background: #fff;
     font: inherit; color: var(--slate-800); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.dna-option:hover { border-color: var(--bioteal-500); background: var(--bioteal-50); }
-.dna-option.selected { border-color: var(--bioteal-600); background: var(--bioteal-50); font-weight: 600; }
+.dna-option:hover { border-color: var(--lilac-500); background: var(--lilac-50); }
+.dna-option.selected { border-color: var(--lilac-600); background: var(--lilac-50); font-weight: 600; }
 .dna-num {
     display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
     background: var(--slate-200); font-weight: 700; font-size: 0.85rem; flex: none;
 }
-.dna-option.selected .dna-num { background: var(--bioteal-600); color: #fff; }
+.dna-option.selected .dna-num { background: var(--lilac-600); color: #fff; }
 .dna-nav { margin-top: 16px; }
 .btn-table:disabled { opacity: 0.45; cursor: default; }
 .dna-card { padding: 18px; margin-bottom: 14px; border: 1px solid var(--slate-200); border-radius: 12px; background: #fff; }
@@ -523,7 +535,7 @@ body {
 .dna-card p { margin: 10px 0 0; color: var(--slate-800); font-size: 0.93rem; }
 .dna-card .bar { margin-top: 6px; }
 .dna-level { padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
-.dna-level.high { background: var(--bioteal-100); color: var(--bioteal-800); }
+.dna-level.high { background: var(--lilac-100); color: var(--lilac-800); }
 .dna-level.mid  { background: #fef3c7; color: #92400e; }
 .dna-level.low  { background: var(--slate-200); color: var(--slate-800); }
 .dna-care { padding: 10px 12px; border-radius: 8px; background: #fff7ed; color: #9a3412 !important; font-weight: 600; }
@@ -544,7 +556,7 @@ body {
     width: 100%; padding: 10px 12px; font: inherit; font-size: 0.92rem;
     border: 1.5px solid var(--slate-200); border-radius: 8px; background: var(--slate-50); outline: none;
 }
-.mf-input:focus { border-color: var(--bioteal-500); background: #fff; }
+.mf-input:focus { border-color: var(--lilac-500); background: #fff; }
 .opt-block { padding: 14px; margin-bottom: 12px; border: 1px solid var(--slate-200); border-radius: 10px; background: var(--slate-50); display: grid; gap: 8px; }
 .opt-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mf-check { display: flex; align-items: center; gap: 8px; margin: 16px 0 4px; font-size: 0.92rem; }
@@ -582,13 +594,13 @@ body {
     height: 22px;
     flex: none;
     border-radius: 50%;
-    border: 3px solid var(--bioteal-100);
-    border-top-color: var(--bioteal-600);
-    animation: bio-spin 0.8s linear infinite;
+    border: 3px solid var(--lilac-100);
+    border-top-color: var(--lilac-600);
+    animation: lilac-spin 0.8s linear infinite;
 }
 .spinner.sm { width: 14px; height: 14px; border-width: 2px; }
 
-@keyframes bio-spin {
+@keyframes lilac-spin {
     to { transform: rotate(360deg); }
 }
 

@@ -64,7 +64,7 @@ CORS_ORIGINS = [
 # --- Sessão em cookie (HttpOnly) -------------------------------------------
 # O token NÃO vai mais para o navegador: ele fica num cookie HttpOnly,
 # que JavaScript não consegue ler (protege contra XSS).
-SESSION_COOKIE = os.getenv("SESSION_COOKIE", "conexao_bio_session")
+SESSION_COOKIE = os.getenv("SESSION_COOKIE", "estresse_em_foco_session")
 # "lax" funciona com front e API no mesmo site (inclusive portas diferentes).
 # Use "none" + HTTPS se o front e a API ficarem em domínios diferentes.
 COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax").lower()
@@ -412,8 +412,9 @@ COMMON_PASSWORDS = {
     "111111", "000000", "11111111", "00000000", "654321", "987654321",
     "maria123", "joao123", "aluno123", "aluno1234", "escola123",
     "admin", "admin123", "admin1234", "root", "root123", "default",
-    "teste123", "teste1234", "test1234", "conexaobio", "bioconexao",
-    "bio12345", "bio2024", "bio2025", "bio2026", "projeto123",
+    "teste123", "teste1234", "test1234", "estresse", "estressemfoco",
+    "foco12345", "foco2024", "foco2025", "foco2026", "projeto123",
+    "estresse123", "estresse1234", "emfoco1234", "bemestar123",
     "senha12345", "senha123456", "aluno123456", "escola1234",
     "iloveyou", "letmein", "welcome", "welcome1", "mudar123",
 }
@@ -764,7 +765,7 @@ async def lifespan(_app):
     yield
 
 
-app = FastAPI(title="Conexão BIO API", lifespan=lifespan)
+app = FastAPI(title="Estresse em Foco API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -778,7 +779,7 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     """Health check do Render: se isso responde, a API subiu."""
-    return {"ok": True, "service": "conexao-bio-api"}
+    return {"ok": True, "service": "estresse-em-foco-api"}
 
 
 def _same_origin(origin: str, request: Request) -> bool:
