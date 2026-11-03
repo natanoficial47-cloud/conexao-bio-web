@@ -95,7 +95,8 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Código da turma: quem não o conhece não consegue criar conta de aluno.
+# Código de acesso: quem não o conhece não consegue criar conta de aluno.
+# É UM código único da escola (vale para todas as turmas e cursos).
 # Se estiver vazio, o cadastro por conta própria fica desativado.
 CLASS_CODE = os.getenv("CLASS_CODE", "").strip()
 
@@ -541,7 +542,9 @@ def _clear_session_cookie(response: Response, request: Request):
 MAX_FAILS_EMAIL = 5
 MAX_FAILS_IP = 100  # a escola inteira sai pelo MESMO IP (NAT): o limite por e-mail é o que protege cada conta
 LOCK_SECONDS = 15 * 60
-SIGNUP_MAX = 100  # a turma inteira se cadastra pelo mesmo IP da escola
+# A escola toda se cadastra pelo mesmo IP (NAT da unidade). 100/hora apertava
+# em campanha de matrícula; 400/hora cobre a escola inteira com folga.
+SIGNUP_MAX = 400
 SIGNUP_WINDOW = 60 * 60
 
 
@@ -670,7 +673,7 @@ def clear_login_fail(db: Session, email: str):
 
 
 def check_signup_rate(db: Session, ip: str):
-    """Limite de cadastros por IP, tambem no banco (100 por hora)."""
+    """Limite de cadastros por IP, tambem no banco (SIGNUP_MAX por hora)."""
     now = datetime.now(timezone.utc)
     row = (
         db.query(LoginAttempt)
@@ -1039,7 +1042,7 @@ def list_logs(
 
 
 # O aluno cria a própria conta. O perfil é SEMPRE "student" (o cliente não
-# escolhe) e o código da turma impede que estranhos se cadastrem.
+# escolhe) e o código de acesso impede que estranhos se cadastrem.
 @app.post("/api/register", status_code=201)
 def register_student(
     data: StudentRegister, request: Request, db: Session = Depends(get_db)
@@ -1055,7 +1058,7 @@ def register_student(
     if not secrets.compare_digest(
         data.class_code.strip().encode(), CLASS_CODE.encode()
     ):
-        raise HTTPException(status_code=403, detail="Código da turma inválido.")
+        raise HTTPException(status_code=403, detail="Código de acesso inválido.")
 
     email = norm(data.email)
     if db.query(User).filter(User.email == email).first():

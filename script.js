@@ -326,7 +326,7 @@ function showAuthForm(mode) {
     setText('auth-title', isLogin ? 'Entrar na plataforma' : 'Criar conta de estudante');
     setText('auth-subtitle', isLogin
         ? 'Use seu e-mail ou matrícula e sua senha para acessar.'
-        : 'Preencha seus dados e o código da turma que a escola informou.');
+        : 'Preencha seus dados e o código de acesso que a escola informou.');
 }
 
 async function postLogin(email, password) {
@@ -373,7 +373,7 @@ async function loginUser(btn) {
     }, 'Entrando…');
 }
 
-// Aluno: criar a própria conta (nome + e-mail/matrícula + senha + código da turma)
+// Aluno: criar a própria conta (nome + e-mail/matrícula + senha + código de acesso)
 async function registerStudent(btn) {
     const name = fieldValue('reg-student-name');
     const email = fieldValue('reg-student-email');

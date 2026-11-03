@@ -61,10 +61,10 @@ MISSIONS = [
     },
     {
         "id": "feedback-relatorio",
-        "title": "A crítica ao seu relatório",
+        "title": "A crítica ao seu trabalho",
         "dimension": "comunicacao",
         "scenario": (
-            "Seu colega de dupla leu o seu relatório de laboratório e disse: \"Tá confuso, ninguém "
+            "Seu colega de dupla leu o seu trabalho e disse: \"Tá confuso, ninguém "
             "entende essa parte.\" Você se esforçou muito e ficou chateado(a). O que faz?"
         ),
         "options": [
@@ -102,10 +102,11 @@ MISSIONS = [
     },
     {
         "id": "microscopio",
-        "title": "Só sobrou um microscópio",
+        "title": "Só sobrou um recurso",
         "dimension": "conflitos",
         "scenario": (
-            "Na aula de microbiologia só restou um microscópio livre, e você e outro colega chegaram "
+            "Na sala só restou um recurso livre (o equipamento, o projetor, o caderno de apoio "
+            "da biblioteca, o que for na sua sala), e você e outro colega chegaram "
             "juntos. Os dois precisam dele agora."
         ),
         "options": [
