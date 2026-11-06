@@ -55,7 +55,39 @@ body {
     padding: 16px 32px;
     background: #fff;
     border-bottom: 1px solid var(--slate-200);
+    position: sticky;
+    top: 0;
+    z-index: 60;
 }
+
+/* Perfil do usuário no topo */
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 6px;
+    border: 1px solid var(--slate-200);
+    border-radius: 999px;
+    background: var(--lilac-50);
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--lilac-500), var(--lilac-accent));
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+}
+
+.header-profile-text { display: flex; flex-direction: column; line-height: 1.25; }
+.header-profile-text strong { font-size: 0.9rem; }
+.header-profile-text span { font-size: 0.76rem; color: var(--slate-500); }
 
 .logo-area { display: flex; align-items: center; gap: 14px; }
 
@@ -332,6 +364,60 @@ body {
 .tabs button:hover { color: var(--slate-800); }
 .tabs button.active { color: var(--lilac-700); border-bottom-color: var(--lilac-600); }
 
+/* ===== Navegação com ícones e indicador deslizante ===== */
+.app-nav {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 6px;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+.app-nav::-webkit-scrollbar { display: none; }
+
+.app-nav button {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: none;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    cursor: pointer;
+    border-radius: 10px;
+    white-space: nowrap;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.app-nav button .icon { width: 1.15em; height: 1.15em; }
+.app-nav button:hover { color: var(--lilac-700); }
+.app-nav button.active { color: var(--lilac-800); }
+.app-nav button.active .icon { color: var(--lilac-600); }
+
+/* Pílula que desliza para a aba ativa */
+.nav-indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    width: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--lilac-100), var(--lilac-200));
+    box-shadow: inset 0 0 0 1px var(--lilac-200);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 0;
+}
+
 /* Missões */
 .options { display: grid; gap: 10px; margin: 16px 0; }
 .option-btn {
@@ -562,8 +648,253 @@ body {
 .mf-check { display: flex; align-items: center; gap: 8px; margin: 16px 0 4px; font-size: 0.92rem; }
 #mission-form-view h4 { margin: 18px 0 6px; }
 
-/* Aviso de servidor acordando */
+/* ===== Aviso de servidor acordando ===== */
 .server-status { min-height: 1.2em; margin: 0 0 12px; font-size: 0.85rem; color: var(--slate-500); text-align: center; }
+
+/* ===== Dashboard: bento grid em cartões flutuantes ===== */
+.container-wide { max-width: 1180px; }
+
+.bento {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.bento-card {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px;
+    border: 1px solid var(--slate-200);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.bento-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 34px rgba(45, 10, 68, 0.10);
+    border-color: var(--lilac-200);
+}
+
+/* Cartão largo (2 ou 3 colunas do grid) */
+.bento-card.span-2 { grid-column: span 2; }
+.bento-card.span-3 { grid-column: span 3; }
+
+/* Cartão de boas-vindas: fundo lilac com brilho */
+.bento-hero {
+    background: linear-gradient(135deg, var(--lilac-700), var(--lilac-900));
+    border-color: transparent;
+    color: #fff;
+    justify-content: center;
+    min-height: 210px;
+}
+.bento-hero:hover { box-shadow: 0 18px 40px rgba(45, 10, 68, 0.28); }
+
+.hero-glow {
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(216, 173, 235, 0.45), transparent 68%);
+    pointer-events: none;
+}
+
+.bento-eyebrow {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate-500);
+}
+.bento-hero .bento-eyebrow { color: var(--lilac-300); }
+
+.bento-title { font-size: 1.35rem; line-height: 1.25; color: var(--slate-800); }
+.bento-hero .bento-title { color: #fff; }
+.bento-title.small { font-size: 1.02rem; }
+
+.bento-sub { font-size: 0.92rem; color: var(--slate-500); margin: 0; }
+.bento-hero .bento-sub { color: rgba(255, 255, 255, 0.82); }
+
+.bento-note { font-size: 0.82rem; color: var(--slate-500); margin: 0; }
+
+.bento-figure {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--lilac-600), var(--lilac-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.bento-icon-wrap {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--lilac-100);
+    color: var(--lilac-700);
+}
+.bento-icon-wrap .icon { width: 24px; height: 24px; }
+
+/* Próximo passo dentro do cartão de boas-vindas */
+.hero-goal {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(4px);
+}
+.hero-goal-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lilac-200);
+}
+.hero-goal strong { font-size: 0.95rem; color: #fff; }
+
+/* Anel de progresso circular com gradiente */
+.ring {
+    --pct: 0;
+    width: 118px;
+    height: 118px;
+    flex: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+        conic-gradient(from 180deg, var(--lilac-600), var(--lilac-accent) calc(var(--pct) * 1%), var(--lilac-100) 0);
+    transition: --pct 0.6s ease;
+}
+.ring-inner {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: #fff;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    line-height: 1.15;
+}
+.ring-inner strong { display: block; font-size: 1.3rem; font-weight: 800; color: var(--lilac-800); }
+.ring-inner span { font-size: 0.66rem; color: var(--slate-500); }
+
+/* Barra linear com gradiente (substitui o lilac-500 chapado) */
+.bento-card .bar { height: 8px; background: var(--slate-200); border-radius: 999px; overflow: hidden; }
+.bento-card .bar > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--lilac-500), var(--lilac-accent));
+    transition: width 0.5s ease;
+}
+
+/* Atalhos rápidos */
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.quick-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 13px 14px;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 14px;
+    background: #fff;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--slate-800);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+.quick-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--lilac-400);
+    background: var(--lilac-50);
+}
+.quick-card .icon { width: 20px; height: 20px; color: var(--lilac-600); flex: none; }
+.quick-card span { overflow: hidden; text-overflow: ellipsis; }
+
+/* Linha do tempo de atividade */
+.timeline { list-style: none; display: grid; gap: 2px; }
+
+.timeline li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 4px;
+    border-bottom: 1px dashed var(--slate-200);
+    font-size: 0.88rem;
+    color: var(--slate-800);
+}
+.timeline li:last-child { border-bottom: none; }
+
+.timeline-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--lilac-100);
+    color: var(--lilac-700);
+}
+.timeline-icon .icon { width: 17px; height: 17px; }
+
+.timeline-body { display: flex; flex-direction: column; min-width: 0; }
+.timeline-body strong { font-weight: 600; }
+.timeline-body small { color: var(--slate-500); font-size: 0.78rem; }
+
+.timeline-empty { color: var(--slate-500); font-style: italic; }
+
+/* Lista de dimensões com barra */
+.dim-list { display: grid; gap: 14px; }
+.dim-row .dim-head { display: flex; justify-content: space-between; font-size: 0.86rem; font-weight: 600; margin-bottom: 6px; }
+.dim-row .bar { height: 8px; background: var(--slate-200); border-radius: 999px; overflow: hidden; }
+.dim-row .bar > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--lilac-500), var(--lilac-accent));
+    transition: width 0.5s ease;
+}
+
+/* ===== Responsivo do bento grid ===== */
+@media (max-width: 1000px) {
+    .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bento-card.span-3 { grid-column: span 2; }
+}
+
+@media (max-width: 700px) {
+    .bento { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .bento-card.span-2, .bento-card.span-3 { grid-column: span 1; }
+    .quick-grid { grid-template-columns: minmax(0, 1fr); }
+    .bento-figure { font-size: 2.1rem; }
+    .header-profile { padding: 5px 10px 5px 5px; }
+    .header-profile-text { display: none; }
+    .app-nav button span { display: none; }
+    .app-nav button { padding: 11px 14px; }
+}
 
 /* ===== Loader global ===== */
 .global-loader {

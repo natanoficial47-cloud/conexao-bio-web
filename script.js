@@ -52,6 +52,60 @@ function errorMessage(data, fallback) {
     return (data && typeof data.detail === 'string') ? data.detail : fallback;
 }
 
+// Move a pílula do indicador para o botão ativo da barra de navegação.
+function moveNavIndicator(navId, indicatorId) {
+    const nav = document.getElementById(navId);
+    const indicator = document.getElementById(indicatorId);
+    if (!nav || !indicator) return;
+    const active = nav.querySelector('button.active');
+    if (!active) {
+        indicator.style.width = '0';
+        return;
+    }
+    const navBox = nav.getBoundingClientRect();
+    const box = active.getBoundingClientRect();
+    indicator.style.width = `${box.width}px`;
+    indicator.style.transform = `translateX(${box.left - navBox.left - 6}px)`;
+}
+
+// Recalcula o indicador quando a janela muda de tamanho (o botão ativo muda de largura).
+let navResizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(navResizeTimer);
+    navResizeTimer = setTimeout(() => {
+        moveNavIndicator('student-nav', 'student-nav-indicator');
+        moveNavIndicator('staff-nav-bar', 'staff-nav-indicator');
+    }, 120);
+});
+
+// Saudação conforme o horário do dia.
+function greetingFor(hour) {
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+}
+
+function firstNameOf(name) {
+    return String(name || '').trim().split(' ')[0] || '';
+}
+
+// Rótulos de perfil por papel (mostrados no topo).
+const ROLE_LABELS = {
+    student: 'Estudante',
+    teacher: 'Professor(a)',
+    psychologist: 'Psicologia',
+    admin: 'Coordenação'
+};
+
+// Data curta em português (ex.: "3 de novembro").
+function longDateBR(date) {
+    try {
+        return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+    } catch (e) {
+        return '';
+    }
+}
+
 // Ícone SVG embutido (sem CDN, sem Font Awesome)
 function icon(name, className = 'icon') {
     return `<svg class="${className}" aria-hidden="true" focusable="false"><use href="#i-${name}"></use></svg>`;
@@ -103,6 +157,7 @@ async function apiFetch(path, options = {}) {
 function showLoginScreen() {
     show('auth-container', true);
     show('view-student', false);
+    show('view-dashboard', false);
     show('view-teacher', false);
     show('view-admin', false);
     show('view-staffadmin', false);
@@ -180,6 +235,7 @@ function checkPasswordStrength() {
 function openPasswordScreen(forced) {
     show('auth-container', false);
     show('view-student', false);
+    show('view-dashboard', false);
     show('view-teacher', false);
     show('view-admin', false);
     show('view-staffadmin', false);
@@ -252,16 +308,23 @@ function startSession(data) {
         return;
     }
 
+    // Perfil do usuário no topo (nome, papel e inicial).
+    const profile = document.getElementById('header-profile');
+    if (profile) profile.hidden = false;
+    setText('header-name', data.name || '');
+    setText('header-role', ROLE_LABELS[data.role] || '');
+    const avatar = document.getElementById('header-avatar');
+    if (avatar) avatar.textContent = firstNameOf(data.name).charAt(0) || '?';
+
     if (data.role === 'student') {
         show('view-student', true);
-        const first = (data.name || '').split(' ')[0];
+        const first = firstNameOf(data.name);
         setText('student-welcome-title', `Olá, ${first}!`);
         setText('current-student-label', data.name || '');
         loadDiary();
-    } else if (data.role === 'teacher') {
-        show('view-teacher', true);
-        loadTeacherData();
-    } else if (data.role === 'psychologist' || data.role === 'admin') {
+        loadStudentDashboard();
+        setTimeout(() => moveNavIndicator('student-nav', 'student-nav-indicator'), 0);
+    } else if (data.role === 'teacher' || data.role === 'psychologist' || data.role === 'admin') {
         initStaffNav(data.role); // uma tela de cada vez
     } else {
         session = null;
@@ -270,7 +333,29 @@ function startSession(data) {
 }
 
 // ---------- inicialização ----------
+// O servidor diz se o cadastro direto está aberto: se estiver desativado,
+// escondemos o botão "Criar minha conta" e explicamos o caminho alternativo.
+async function checkSelfRegistration() {
+    try {
+        const res = await fetch(`${API}/config`, { credentials: 'include' });
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (cfg.self_registration) return;
+
+        const btn = document.getElementById('register-open-btn');
+        const sw = document.getElementById('register-switch');
+        const msg = document.getElementById('register-closed-msg');
+        if (btn) btn.style.display = 'none';
+        if (sw) sw.style.display = 'none';
+        if (msg) msg.style.display = '';
+    } catch (e) {
+        // Se a API não responde, deixamos o botão como está (o servidor avisa ao tentar).
+        console.error(e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    await checkSelfRegistration();
     try {
         const res = await withWakeNotice(() => fetch(`${API}/me`, { credentials: 'include' }));
         if (!res.ok) {
@@ -285,12 +370,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Menu da equipe (uma tela de cada vez):
-//   admin: Turma | Indicadores | Missões | Equipe | Acessos     psicóloga: Indicadores | Missões
+//   admin: Painel | Turma | Indicadores | Missões | Equipe | Acessos
+//   psicóloga: Painel | Indicadores | Missões
+//   professor: Painel | Turma
 const STAFF_TABS = {
-    admin: ['class', 'metrics', 'missions', 'team', 'logs'],
-    psychologist: ['metrics', 'missions']
+    admin: ['dashboard', 'class', 'metrics', 'missions', 'team', 'logs'],
+    psychologist: ['dashboard', 'metrics', 'missions'],
+    teacher: ['dashboard', 'class']
 };
-const ALL_STAFF_TABS = ['class', 'metrics', 'missions', 'team', 'logs'];
+const ALL_STAFF_TABS = ['dashboard', 'class', 'metrics', 'missions', 'team', 'logs'];
 
 function initStaffNav(role) {
     const allowed = STAFF_TABS[role] || [];
@@ -300,9 +388,11 @@ function initStaffNav(role) {
     });
     show('staff-nav', true);
     switchStaffTab(allowed[0]);
+    setTimeout(() => moveNavIndicator('staff-nav-bar', 'staff-nav-indicator'), 0);
 }
 
 function switchStaffTab(tab) {
+    show('view-dashboard', tab === 'dashboard');
     show('view-teacher', tab === 'class');
     show('view-admin', tab === 'metrics');
     show('view-missions-admin', tab === 'missions');
@@ -312,10 +402,12 @@ function switchStaffTab(tab) {
         const btn = document.getElementById(`snav-btn-${t}`);
         if (btn) btn.classList.toggle('active', t === tab);
     });
+    if (tab === 'dashboard') loadStaffDashboard();
     if (tab === 'class') loadTeacherData();
     if (tab === 'metrics') loadAdminMetrics();
     if (tab === 'missions') { cancelMissionForm(); loadManageMissions(); }
     if (tab === 'logs') loadAccessLog();
+    setTimeout(() => moveNavIndicator('staff-nav-bar', 'staff-nav-indicator'), 0);
 }
 
 // ---------- login / cadastro ----------
@@ -454,11 +546,198 @@ function switchStudentTab(tabId) {
         const content = document.getElementById(`stab-${t}`);
         const btn = document.getElementById(`stab-btn-${t}`);
         if (content) content.style.display = (t === tabId) ? 'block' : 'none';
-        if (btn) btn.classList.toggle('active', t === tabId);
+        if (btn) {
+            const active = t === tabId;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        }
     });
     if (tabId === 'diary') loadDiary();
     if (tabId === 'missions') loadMissions();
     if (tabId === 'dna') loadDna();
+    if (tabId === 'home') loadStudentDashboard();
+    setTimeout(() => moveNavIndicator('student-nav', 'student-nav-indicator'), 0);
+}
+
+// ---------- dashboard do estudante ----------
+// Atalhos rápidos: cada botão leva para a aba correspondente.
+const STUDENT_SHORTCUTS = [
+    { tab: 'missions', icon: 'target', label: 'Minhas missões' },
+    { tab: 'diary', icon: 'book', label: 'Diário' },
+    { tab: 'dna', icon: 'helix', label: 'Meu DNA' },
+    { tab: 'help', icon: 'heart', label: 'Preciso de ajuda' }
+];
+
+function renderStudentShortcuts() {
+    const box = document.getElementById('dash-quick');
+    if (!box) return;
+    box.innerHTML = STUDENT_SHORTCUTS.map(s => `
+        <button type="button" class="quick-card" onclick="switchStudentTab('${s.tab}')">
+            ${icon(s.icon)}<span>${esc(s.label)}</span>
+        </button>`).join('');
+}
+
+// Atividade recente: mistura missões respondidas, diário e DNA numa linha do tempo.
+function buildActivityTimeline(missions, diary, dnaLatest) {
+    const items = [];
+
+    (missions || []).forEach(m => {
+        if (!m.done || !m.answered_at) return;
+        items.push({
+            when: m.answered_at,
+            icon: 'target',
+            title: `Respondeu "${m.title}"`,
+            note: m.best_points >= 10 ? 'Melhor escolha possível' : `+${m.best_points} pontos`
+        });
+    });
+
+    (diary || []).forEach(e => {
+        if (!e.created_at) return;
+        items.push({
+            when: e.created_at,
+            icon: 'book',
+            title: 'Escreveu no diário',
+            note: e.mood || ''
+        });
+    });
+
+    if (dnaLatest && dnaLatest.created_at) {
+        items.push({
+            when: dnaLatest.created_at,
+            icon: 'helix',
+            title: 'Fez o teste Meu DNA',
+            note: 'Perfil de personalidade registrado'
+        });
+    }
+
+    return items
+        .sort((a, b) => new Date(b.when || 0) - new Date(a.when || 0))
+        .slice(0, 6);
+}
+
+function renderActivityTimeline(elId, items, emptyText) {
+    const box = document.getElementById(elId);
+    if (!box) return;
+    if (!items.length) {
+        box.innerHTML = `<li class="timeline-empty">${esc(emptyText)}</li>`;
+        return;
+    }
+    box.innerHTML = items.map(it => {
+        let quando = '';
+        // Sem data (ou data inválida) mostramos só o título — nunca "1 de jan. de 1970".
+        if (it.when) {
+            try {
+                const d = new Date(it.when);
+                if (!isNaN(d.getTime())) {
+                    quando = d.toLocaleDateString('pt-BR', {
+                        day: '2-digit', month: 'short'
+                    });
+                }
+            } catch (e) { /* data inválida: mostra só o título */ }
+        }
+        return `<li>
+            <span class="timeline-icon">${icon(it.icon)}</span>
+            <span class="timeline-body">
+                <strong>${esc(it.title)}</strong>
+                <small>${esc(it.note || '')}${it.note && quando ? ' · ' : ''}${esc(quando)}</small>
+            </span>
+        </li>`;
+    }).join('');
+}
+
+async function loadStudentDashboard() {
+    if (!session || session.role !== 'student') return;
+
+    const nome = firstNameOf(session.name);
+    setText('dash-greeting', greetingFor(new Date().getHours()));
+    setText('dash-title', `${greetingFor(new Date().getHours())}, ${nome}!`);
+    renderStudentShortcuts();
+
+    // Missões
+    let missions = null;
+    try {
+        const res = await apiFetch('/missions');
+        if (res.ok) missions = await res.json();
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
+
+    // Diário
+    let diary = null;
+    try {
+        const res = await apiFetch('/diary');
+        if (res.ok) diary = await res.json();
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
+
+    // DNA (só o último resultado interessa no painel)
+    let dnaLatest = null;
+    try {
+        const res = await apiFetch('/dna');
+        if (res.ok) {
+            const data = await res.json();
+            dnaLatest = data.latest || null;
+        }
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
+
+    if (missions) {
+        const total = missions.total_missions || 0;
+        const done = missions.completed || 0;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+
+        const ring = document.getElementById('dash-missions-ring');
+        if (ring) ring.style.setProperty('--pct', pct);
+        setText('dash-missions-value', `${pct}%`);
+        setText('dash-missions-note', done === total && total > 0
+            ? 'Você concluiu todas as missões!'
+            : `${done} de ${total} missões respondidas`);
+
+        const maxPts = missions.max_points || 0;
+        const pts = missions.total_points || 0;
+        setText('dash-points', String(pts));
+        const bar = document.getElementById('dash-points-bar');
+        if (bar) bar.style.width = `${maxPts ? (pts / maxPts) * 100 : 0}%`;
+        setText('dash-points-note', maxPts ? `de ${maxPts} pontos possíveis` : 'nenhum ponto ainda');
+
+        // Próximo passo: a primeira missão ainda não respondida.
+        const pending = (missions.missions || []).find(m => !m.done);
+        const goal = document.getElementById('dash-goal');
+        const goalText = document.getElementById('dash-goal-text');
+        if (goal && goalText) {
+            if (pending) {
+                goal.hidden = false;
+                goalText.textContent = `Responder "${pending.title}"`;
+                setText('dash-subtitle', `Você já respondeu ${done} de ${total} missões. Continue assim!`);
+            } else if (total > 0) {
+                goal.hidden = false;
+                goalText.textContent = 'Escrever uma reflexão no diário';
+                setText('dash-subtitle', 'Você concluiu todas as missões. Que tal registrar como está se sentindo?');
+            } else {
+                goal.hidden = true;
+                setText('dash-subtitle', 'Assim que a escola publicar novas missões, elas aparecem aqui.');
+            }
+        }
+    }
+
+    // Cartão do DNA
+    if (dnaLatest) {
+        setText('dash-dna-title', 'Resultado pronto');
+        setText('dash-dna-note', 'Abra a aba Meu DNA para ver o seu perfil.');
+        const iconWrap = document.getElementById('dash-dna-icon');
+        if (iconWrap) iconWrap.innerHTML = icon('check');
+    } else {
+        setText('dash-dna-title', 'Ainda não respondi');
+        setText('dash-dna-note', 'Faça o teste para se conhecer melhor.');
+    }
+
+    renderActivityTimeline('dash-activity', buildActivityTimeline(
+        missions ? missions.missions : [],
+        diary,
+        dnaLatest
+    ), 'Nada por aqui ainda. Comece pelas missões!');
 }
 
 function selectMood(mood) {
@@ -533,6 +812,25 @@ async function loadDiary() {
 async function loadTeacherData() {
     const tbody = document.getElementById('teacher-students-table');
     if (!tbody) return;
+
+    // Mostra o código de acesso para a equipe distribuir aos alunos.
+    try {
+        const res = await apiFetch('/students/config');
+        if (res.ok) {
+            const cfg = await res.json();
+            const hint = document.getElementById('class-code-hint');
+            if (hint) {
+                if (cfg.self_registration && cfg.class_codes && cfg.class_codes.length) {
+                    hint.style.display = '';
+                    hint.textContent = `Código de acesso para os alunos criarem a própria conta: ${cfg.class_codes.join(' · ')}`;
+                } else {
+                    hint.style.display = 'none';
+                }
+            }
+        }
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
 
     try {
         const response = await apiFetch('/students');
@@ -746,6 +1044,204 @@ async function createStaff(btn) {
             if (e.message !== 'sessao expirada') console.error(e);
         }
     }, 'Criando conta…');
+}
+
+// ---------- dashboard da equipe ----------
+// Atalhos da equipe: cada botão leva para a aba correspondente da equipe.
+const STAFF_SHORTCUTS = {
+    admin: [
+        { tab: 'class', icon: 'users', label: 'Turma' },
+        { tab: 'metrics', icon: 'star', label: 'Indicadores' },
+        { tab: 'missions', icon: 'target', label: 'Missões' },
+        { tab: 'logs', icon: 'clock', label: 'Acessos' }
+    ],
+    psychologist: [
+        { tab: 'metrics', icon: 'star', label: 'Indicadores' },
+        { tab: 'missions', icon: 'target', label: 'Missões' }
+    ],
+    teacher: [
+        { tab: 'class', icon: 'users', label: 'Turma' }
+    ]
+};
+
+function renderStaffShortcuts(role) {
+    const box = document.getElementById('staff-dash-quick');
+    if (!box) return;
+    const list = STAFF_SHORTCUTS[role] || [];
+    if (!list.length) {
+        box.innerHTML = '<p class="bento-note">Nenhum atalho para este perfil.</p>';
+        return;
+    }
+    box.innerHTML = list.map(s => `
+        <button type="button" class="quick-card" onclick="switchStaffTab('${s.tab}')">
+            ${icon(s.icon)}<span>${esc(s.label)}</span>
+        </button>`).join('');
+}
+
+// Atividade recente da escola (vinda de /api/activity).
+function buildStaffTimeline(activity) {
+    return (activity || []).slice(0, 8).map(it => ({
+        when: it.when,
+        icon: it.kind === 'mission' ? 'target' : 'users',
+        title: it.title,
+        note: it.note
+    }));
+}
+
+async function loadStaffDashboard() {
+    if (!session || session.role === 'student') return;
+
+    const role = session.role;
+    const nome = firstNameOf(session.name);
+    const hora = new Date().getHours();
+    setText('staff-dash-greeting', greetingFor(hora));
+    setText('staff-dash-hello', `${greetingFor(hora)}, ${nome}!`);
+    setText('staff-dash-title', role === 'teacher' ? 'Painel do Professor'
+        : role === 'psychologist' ? 'Painel da Psicologia' : 'Painel da Coordenação');
+    renderStaffShortcuts(role);
+
+    // Cada papel enxerga um conjunto diferente de dados. Tudo aqui é tolerante
+    // a 403: se um endpoint não é liberado para o papel, o cartão simplesmente
+    // mostra o que ele tem.
+    let metrics = null;
+    let students = null;
+    let activity = null;
+
+    if (role === 'admin' || role === 'psychologist') {
+        try {
+            const res = await apiFetch('/metrics');
+            if (res.ok) metrics = await res.json();
+        } catch (e) {
+            if (e.message !== 'sessao expirada') console.error(e);
+        }
+    }
+
+    if (role === 'admin' || role === 'teacher') {
+        try {
+            const res = await apiFetch('/students');
+            if (res.ok) students = await res.json();
+        } catch (e) {
+            if (e.message !== 'sessao expirada') console.error(e);
+        }
+    }
+
+    try {
+        const res = await apiFetch('/activity?limit=8');
+        if (res.ok) activity = await res.json();
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
+
+    // Código de acesso: a equipe precisa dele para os alunos criarem a conta.
+    try {
+        const res = await apiFetch('/students/config');
+        if (res.ok) {
+            const cfg = await res.json();
+            const code = document.getElementById('staff-dash-code');
+            if (code) {
+                if (cfg.self_registration && cfg.class_codes && cfg.class_codes.length) {
+                    code.textContent = `Código de acesso para os alunos: ${cfg.class_codes.join(' · ')}`;
+                } else {
+                    code.textContent = 'O cadastro direto de alunos está desativado.';
+                }
+            }
+        }
+    } catch (e) {
+        if (e.message !== 'sessao expirada') console.error(e);
+    }
+
+    // Cartão "Meta da escola": o anel mostra a pontuação coletiva.
+    if (metrics) {
+        const pct = Math.max(0, Math.min(100, metrics.percentage || 0));
+        const ring = document.getElementById('staff-dash-ring');
+        if (ring) ring.style.setProperty('--pct', pct);
+        setText('staff-dash-ring-value', `${pct}%`);
+        setText('staff-dash-ring-note', `${metrics.score} de 1000 pontos coletivos`);
+    } else if (students) {
+        // Professor não vê as métricas coletivas: mostramos a cobertura da avaliação.
+        const avaliados = students.filter(s => s.comm || s.conflict || s.coop).length;
+        const pct = students.length ? Math.round((avaliados / students.length) * 100) : 0;
+        const ring = document.getElementById('staff-dash-ring');
+        if (ring) ring.style.setProperty('--pct', pct);
+        setText('staff-dash-ring-value', `${pct}%`);
+        setText('staff-dash-ring-note', 'da turma já avaliada');
+    } else {
+        setText('staff-dash-ring-note', 'Indicadores coletivos restritos a psicologia e coordenação.');
+    }
+
+    // Cartão "Avaliados".
+    if (metrics) {
+        setText('staff-dash-evaluated', String(metrics.total_students));
+        const bar = document.getElementById('staff-dash-evaluated-bar');
+        if (bar) bar.style.width = `${Math.max(0, Math.min(100, metrics.percentage || 0))}%`;
+        setText('staff-dash-evaluated-note', 'estudantes com rubrica registrada');
+    } else if (students) {
+        setText('staff-dash-evaluated', students.length);
+        const avaliados = students.filter(s => s.comm || s.conflict || s.coop).length;
+        const bar = document.getElementById('staff-dash-evaluated-bar');
+        if (bar) bar.style.width = `${students.length ? (avaliados / students.length) * 100 : 0}%`;
+        setText('staff-dash-evaluated-note', 'alunos cadastrados na escola');
+    }
+
+    // Cartão "Habilidades observadas": as três dimensões coletivas.
+    const dimsBox = document.getElementById('staff-dash-dims');
+    if (dimsBox) {
+        if (metrics) {
+            const rows = [
+                ['Comunicação', metrics.dim_comm],
+                ['Gestão de conflitos', metrics.dim_conflict],
+                ['Cooperação', metrics.dim_coop]
+            ];
+            dimsBox.innerHTML = rows.map(([label, value]) => `
+                <div class="dim-row">
+                    <div class="dim-head"><span>${esc(label)}</span><span>${value} pts</span></div>
+                    <div class="bar"><span style="width:${Math.max(0, Math.min(100, (value / 200) * 100))}%"></span></div>
+                </div>`).join('');
+        } else {
+            dimsBox.innerHTML = '<p class="bento-note">As habilidades coletivas são vistas pela psicologia e pela coordenação.</p>';
+        }
+    }
+
+    // Próximo passo: o que a equipe pode fazer agora.
+    const goal = document.getElementById('staff-dash-goal');
+    const goalText = document.getElementById('staff-dash-goal-text');
+    if (goal && goalText) {
+        let proximo = '';
+        if (role === 'admin' && students) {
+            const pendentes = students.filter(s => s.must_change_password).length;
+            proximo = pendentes
+                ? `Enviar o PIN para ${pendentes} aluno(s) que ainda não acessaram`
+                : 'Todos os alunos já acessaram a plataforma';
+        } else if (role === 'teacher' && students) {
+            const semAvaliacao = students.filter(s => !(s.comm || s.conflict || s.coop)).length;
+            proximo = semAvaliacao
+                ? `Avaliar ${semAvaliacao} aluno(s) que ainda não têm rubrica`
+                : 'Turma avaliada — hora de acompanhar as respostas';
+        } else if (metrics) {
+            proximo = metrics.percentage >= 90
+                ? 'Meta atingida: sustentar o resultado com as turmas'
+                : `Faltam ${100 - (metrics.percentage || 0)}% para a meta coletiva`;
+        }
+        if (proximo) {
+            goal.hidden = false;
+            goalText.textContent = proximo;
+        } else {
+            goal.hidden = true;
+        }
+    }
+
+    // Subtítulo: um resumo do que está na tela.
+    if (metrics) {
+        setText('staff-dash-sub', `${metrics.total_students} aluno(s) avaliado(s) e ${metrics.score} de 1000 pontos coletivos.`);
+    } else if (students) {
+        const avaliados = students.filter(s => s.comm || s.conflict || s.coop).length;
+        setText('staff-dash-sub', `${students.length} aluno(s) cadastrado(s), ${avaliados} com rubrica registrada.`);
+    } else {
+        setText('staff-dash-sub', 'Visão geral da escola em um só lugar.');
+    }
+
+    renderActivityTimeline('staff-dash-activity', buildStaffTimeline(activity),
+        'Nenhuma atividade registrada ainda.');
 }
 
 // ---------- painel da psicologia / coordenação ----------

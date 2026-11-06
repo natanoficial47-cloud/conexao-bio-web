@@ -95,10 +95,31 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+# ---------------------------------------------------------------------------
+# Cadastro direto de alunos
+# ---------------------------------------------------------------------------
 # Código de acesso: quem não o conhece não consegue criar conta de aluno.
-# É UM código único da escola (vale para todas as turmas e cursos).
-# Se estiver vazio, o cadastro por conta própria fica desativado.
+# É UM código único da escola (vale para todas as turmas e cursos) e pode
+# traer vários códigos separados por vírgula (um por turma, por exemplo).
+# Se CLASS_CODE vier vazia, entra o DEFAULT_CLASS_CODE (configurável por env).
 CLASS_CODE = os.getenv("CLASS_CODE", "").strip()
+DEFAULT_CLASS_CODE = os.getenv("DEFAULT_CLASS_CODE", "ESTRESSE2026").strip()
+# Liga/desliga o cadastro por conta própria (0/false/no desliga).
+ALLOW_SELF_REGISTRATION = os.getenv("ALLOW_SELF_REGISTRATION", "1").strip().lower() not in (
+    "0",
+    "false",
+    "no",
+    "off",
+)
+
+
+def _accepted_class_codes() -> list:
+    """Códigos de acesso válidos (maiúsculas, sem espaço nas pontas)."""
+    raw = CLASS_CODE or DEFAULT_CLASS_CODE
+    return [c.strip().upper() for c in raw.split(",") if c.strip()]
+
+
+CLASS_CODES = _accepted_class_codes()
 
 ROLES_STAFF = ("teacher", "admin")
 
@@ -785,6 +806,35 @@ def health():
     return {"ok": True, "service": "estresse-em-foco-api"}
 
 
+@app.get("/api/config")
+def public_config():
+    """Configuração pública: o front só precisa saber se o cadastro direto está
+    aberto (para mostrar ou esconder o botão "Criar minha conta").
+
+    O código de acesso NÃO é exposto aqui de propósito: ele é a barreira que
+    impede desconhecidos de criar conta. Quem pode ver o código de verdade é a
+    equipe, em /api/students/config (exige papel de professor ou admin).
+    """
+    return {
+        "self_registration": bool(ALLOW_SELF_REGISTRATION and CLASS_CODES),
+    }
+
+
+@app.get("/api/students/config")
+def students_config(
+    _: User = Depends(require_roles("teacher", "psychologist", "admin")),
+):
+    """Equipe: mostra o código de acesso para distribuir aos alunos.
+
+    Não devolve nada sobre os alunos, só o código — a psicologia também
+    precisa desse código para orientar quem chega do lado de fora.
+    """
+    return {
+        "self_registration": bool(ALLOW_SELF_REGISTRATION and CLASS_CODES),
+        "class_codes": CLASS_CODES,
+    }
+
+
 def _same_origin(origin: str, request: Request) -> bool:
     """True quando o Origin casa com o Host da requisicao.
 
@@ -1047,7 +1097,7 @@ def list_logs(
 def register_student(
     data: StudentRegister, request: Request, db: Session = Depends(get_db)
 ):
-    if not CLASS_CODE:
+    if not ALLOW_SELF_REGISTRATION or not CLASS_CODES:
         raise HTTPException(
             status_code=503, detail="Cadastro de alunos está desativado no momento."
         )
@@ -1055,8 +1105,9 @@ def register_student(
     ip = _client_ip(request)
     check_signup_rate(db, ip)
 
-    if not secrets.compare_digest(
-        data.class_code.strip().encode(), CLASS_CODE.encode()
+    given = data.class_code.strip().upper()
+    if not any(
+        secrets.compare_digest(given.encode(), code.encode()) for code in CLASS_CODES
     ):
         raise HTTPException(status_code=403, detail="Código de acesso inválido.")
 
@@ -1303,6 +1354,8 @@ def list_missions(
         d = _mission_dict(m, full=False)
         d["done"] = m.id in done
         d["best_points"] = done[m.id].best_points if m.id in done else 0
+        # Quando o aluno respondeu: usado pelo painel para a linha do tempo.
+        d["answered_at"] = done[m.id].answered_at.isoformat() if m.id in done else None
         out.append(d)
     return {
         "total_points": sum(r.best_points for r in rows),
@@ -1311,6 +1364,65 @@ def list_missions(
         "total_missions": len(missions),
         "missions": out,
     }
+
+
+@app.get("/api/activity")
+def recent_activity(
+    limit: int = 8,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles("teacher", "psychologist", "admin")),
+):
+    """Atividade recente da escola para o painel da equipe.
+
+    Junta as respostas às missões (com o nome do aluno) e os acessos mais
+    recentes. Todo mundo da equipe enxerga a MESMA lista: é um painel
+    coletivo, não um relatório individual de aluno.
+    """
+    limit = max(1, min(limit, 30))
+    items = []
+
+    # Respostas às missões (aluno + missão + quando).
+    rows = (
+        db.query(MissionProgress, User, Mission)
+        .join(User, MissionProgress.user_id == User.id)
+        .join(Mission, MissionProgress.mission_id == Mission.id)
+        .order_by(MissionProgress.answered_at.desc())
+        .limit(limit)
+        .all()
+    )
+    for progress, student, mission in rows:
+        items.append({
+            "kind": "mission",
+            "when": progress.answered_at.isoformat() if progress.answered_at else None,
+            "title": student.name,
+            "note": f"Respondeu a missão “{mission.title}”",
+            "points": progress.best_points,
+        })
+
+    # Acessos recentes (entrou/saiu/trocou a senha).
+    logs = (
+        db.query(LoginLog)
+        .filter(LoginLog.success == 1)
+        .order_by(LoginLog.id.desc())
+        .limit(limit)
+        .all()
+    )
+    reasons = {
+        "login": "Entrou na plataforma",
+        "logout": "Saiu da plataforma",
+        "senha alterada": "Trocou a senha",
+    }
+    for log in logs:
+        items.append({
+            "kind": "login",
+            "when": log.created_at.isoformat() if log.created_at else None,
+            "title": log.email or "Acesso",
+            "note": reasons.get(log.reason, log.reason or "Acessou a plataforma"),
+            "points": None,
+        })
+
+    items.sort(key=lambda i: (i["when"] or ""), reverse=True)
+    return items[:limit]
 
 
 @app.post("/api/missions/{mission_id}/answer")
